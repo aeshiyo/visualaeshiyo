@@ -1,87 +1,75 @@
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
+local function applyChineseHat()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
 
-local function createChineseHat()
     if character:FindFirstChild("ChineseHat") then
         character.ChineseHat:Destroy()
     end
-    
-    local hat = Instance.new("Accessory")
-    hat.Name = "ChineseHat"
-    
-    local handle = Instance.new("Part", hat)
-    handle.Name = "Handle"
-    handle.Size = Vector3.new(0.2, 0.2, 0.2)
-    handle.Transparency = 1
-    
-    local hatPart = Instance.new("Part")
-    hatPart.Name = "HatPart"
-    hatPart.Size = Vector3.new(2.5, 0.2, 2.5)
-    hatPart.Shape = Enum.PartType.Cylinder
-    hatPart.BrickColor = BrickColor.new("Bright red")
-    hatPart.TopSurface = Enum.SurfaceType.Smooth
-    hatPart.BottomSurface = Enum.SurfaceType.Smooth
-    
-    local cone = Instance.new("Part")
-    cone.Name = "ConePart"
-    cone.Size = Vector3.new(1.8, 1.8, 1.8)
-    cone.Shape = Enum.PartType.Ball
-    cone.BrickColor = BrickColor.new("Bright yellow")
-    cone.TopSurface = Enum.SurfaceType.Smooth
-    cone.BottomSurface = Enum.SurfaceType.Smooth
-    
-    local hatWeld = Instance.new("WeldConstraint", handle)
-    hatWeld.Part0 = handle
-    hatWeld.Part1 = hatPart
-    
-    local coneWeld = Instance.new("WeldConstraint", hatPart)
-    coneWeld.Part0 = hatPart
-    coneWeld.Part1 = cone
-    coneWeld.C0 = CFrame.new(0, 1, 0)
-    
-    hat.Parent = character
-    handle.CFrame = character.Head.CFrame * CFrame.new(0, 0.6, 0) * CFrame.Angles(0, 0, math.rad(90))
-    hatPart.CFrame = handle.CFrame * CFrame.Angles(0, 0, math.rad(90))
-    
-    for _, part in ipairs(hat:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.LocalTransparencyModifier = 0
-        end
-    end
-end
 
-local function freezeAnimations()
-    for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
+    local hat = Instance.new("Part")
+    hat.Name = "ChineseHat"
+    hat.Size = Vector3.new(2.5, 0.2, 2.5)
+    hat.Shape = Enum.PartType.Cylinder
+    hat.Color = Color3.fromRGB(255, 0, 0)
+    hat.Material = Enum.Material.Neon
+    hat.Anchored = false
+    hat.CanCollide = false
+
+    local tip = Instance.new("Part")
+    tip.Name = "HatTip"
+    tip.Size = Vector3.new(0.5, 1.5, 0.5)
+    tip.Shape = Enum.PartType.Ball
+    tip.Color = Color3.fromRGB(255, 255, 0)
+    tip.Material = Enum.Material.Neon
+    tip.Anchored = false
+    tip.CanCollide = false
+
+    local weld1 = Instance.new("WeldConstraint")
+    weld1.Part0 = character.Head
+    weld1.Part1 = hat
+    weld1.Parent = hat
+
+    local weld2 = Instance.new("WeldConstraint")
+    weld2.Part0 = hat
+    weld2.Part1 = tip
+    weld2.C0 = CFrame.new(0, 0.8, 0)
+    weld2.Parent = tip
+
+    hat.CFrame = character.Head.CFrame * CFrame.new(0, 0.6, 0) * CFrame.Angles(0, 0, math.rad(90))
+    hat.Parent = character
+    tip.Parent = character
+
+    for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
         track:Stop()
     end
-    
+
     humanoid.AnimationPlayed:Connect(function(track)
+        task.wait(0.1)
         track:Stop()
     end)
-    
-    humanoid:ChangeState(Enum.HumanoidStateType.Running)
+
+    workspace.CurrentCamera.FieldOfView = 105
 end
 
-local function setFOV(value)
-    local camera = workspace.CurrentCamera
-    if camera then
-        camera.FieldOfView = value
+local function onCharacterAdded(character)
+    character:WaitForChild("Humanoid")
+    task.wait(1)
+    applyChineseHat()
+end
+
+game:GetService("Players").LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
+
+if game:GetService("Players").LocalPlayer.Character then
+    applyChineseHat()
+end
+
+local UIS = game:GetService("UserInputService")
+UIS.InputBegan:Connect(function(input, gameProcessed)
+    if input.KeyCode == Enum.KeyCode.H then
+        applyChineseHat()
     end
-end
-
-player.CharacterAdded:Connect(function(newCharacter)
-    character = newCharacter
-    humanoid = character:WaitForChild("Humanoid")
-    createChineseHat()
-    freezeAnimations()
-    setFOV(105)
 end)
-
-createChineseHat()
-freezeAnimations()
-setFOV(105)
