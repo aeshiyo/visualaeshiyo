@@ -2,8 +2,6 @@ local ChineseHat = {}
 
 function ChineseHat.new(config)
     local self = {}
-    
-    -- Конфигурация по умолчанию
     config = config or {}
     self.enabled = config.enabled ~= false
     self.heightOffset = config.heightOffset or 0.9
@@ -13,13 +11,9 @@ function ChineseHat.new(config)
     self.sides = config.sides or 64
     self.color = config.color or Color3.new(1, 0, 0)
     self.transparency = config.transparency or 0.3
-    
-    -- Сервисы
     self.players = game:GetService("Players")
     self.runService = game:GetService("RunService")
     self.userInputService = game:GetService("UserInputService")
-    
-    -- Переменные
     self.player = self.players.LocalPlayer
     self.character = nil
     self.head = nil
@@ -28,18 +22,13 @@ function ChineseHat.new(config)
     self.connections = {}
     self.active = false
     
-    -- Локальные функции
     local function initialize()
         if not self.enabled then return end
-        
-        -- Создаем основу (круг)
         self.circle = Drawing.new("Circle")
         self.circle.Visible = false
         self.circle.Thickness = 0
         self.circle.Filled = true
         self.circle.NumSides = self.sides
-        
-        -- Создаем треугольники для 3D эффекта
         self.triangles = {}
         for i = 1, self.sides * 2 + 10 do
             local triangle = Drawing.new("Triangle")
@@ -47,7 +36,6 @@ function ChineseHat.new(config)
             triangle.Filled = true
             table.insert(self.triangles, triangle)
         end
-        
         self:updateVisuals()
     end
 
@@ -56,7 +44,6 @@ function ChineseHat.new(config)
             self.circle:Remove()
             self.circle = nil
         end
-        
         for _, triangle in ipairs(self.triangles) do
             if triangle then
                 triangle.Visible = false
@@ -64,17 +51,14 @@ function ChineseHat.new(config)
             end
         end
         self.triangles = {}
-        
         self.character = nil
         self.head = nil
     end
 
     function self:updateVisuals()
         if not self.circle then return end
-        
         self.circle.Color = self.color
         self.circle.Transparency = self.transparency
-        
         for _, triangle in ipairs(self.triangles) do
             triangle.Color = self.color
             triangle.Transparency = self.transparency
@@ -92,18 +76,12 @@ function ChineseHat.new(config)
             end
             return 
         end
-        
         local camera = workspace.CurrentCamera
         if not camera then return end
-        
-        -- Позиции в мире
         local basePosition = self.head.Position + Vector3.new(0, self.heightOffset, 0)
         local topPosition = basePosition + Vector3.new(0, self.hatHeight, 0)
-        
-        -- Переводим в 2D координаты экрана
         local baseScreenPos, baseVisible = camera:WorldToViewportPoint(basePosition)
         local topScreenPos, topVisible = camera:WorldToViewportPoint(topPosition)
-        
         if not (baseVisible and topVisible) then
             self.circle.Visible = false
             for _, triangle in ipairs(self.triangles) do 
@@ -111,16 +89,11 @@ function ChineseHat.new(config)
             end
             return
         end
-        
         local center2D = Vector2.new(baseScreenPos.X, baseScreenPos.Y)
         local top2D = Vector2.new(topScreenPos.X, topScreenPos.Y)
-        
-        -- Обновляем основу
         self.circle.Position = center2D
         self.circle.Radius = self.topRadius
         self.circle.Visible = self.enabled
-        
-        -- Рассчитываем позиции для граней
         local circlePositions = {}
         for i = 1, self.sides do
             local angle = math.rad((i / self.sides) * 360)
@@ -128,11 +101,7 @@ function ChineseHat.new(config)
             local pointPos = camera:WorldToViewportPoint(basePosition + offset)
             circlePositions[i] = Vector2.new(pointPos.X, pointPos.Y)
         end
-        
-        -- Рисуем боковые грани
         local triangleIndex = 1
-        
-        -- Нижние треугольники (основание)
         for i = 1, self.sides do
             local nextIndex = i % self.sides + 1
             self.triangles[triangleIndex].PointA = center2D
@@ -141,8 +110,6 @@ function ChineseHat.new(config)
             self.triangles[triangleIndex].Visible = self.enabled
             triangleIndex = triangleIndex + 1
         end
-        
-        -- Верхние треугольники (крыша)
         for i = 1, self.sides do
             local nextIndex = i % self.sides + 1
             self.triangles[triangleIndex].PointA = top2D
@@ -151,8 +118,6 @@ function ChineseHat.new(config)
             self.triangles[triangleIndex].Visible = self.enabled
             triangleIndex = triangleIndex + 1
         end
-        
-        -- Скрываем неиспользуемые треугольники
         for i = triangleIndex, #self.triangles do
             self.triangles[i].Visible = false
         end
@@ -161,32 +126,25 @@ function ChineseHat.new(config)
     local function setupCharacter(newCharacter)
         self.character = newCharacter
         self.head = self.character:WaitForChild("Head")
-        
         local humanoid = self.character:FindFirstChildOfClass("Humanoid")
         if humanoid then
             table.insert(self.connections, humanoid.Died:Connect(function()
                 cleanup()
             end))
         end
-        
         initialize()
     end
 
-    -- Публичные методы
     function self:Start()
         if self.active then return end
         self.active = true
-        
         cleanup()
-        
         if self.player.Character then
             setupCharacter(self.player.Character)
         end
-        
         table.insert(self.connections, self.player.CharacterAdded:Connect(function(character)
             setupCharacter(character)
         end))
-        
         table.insert(self.connections, self.runService.RenderStepped:Connect(function()
             if self.enabled and self.character and self.head then
                 self:update()
@@ -197,12 +155,10 @@ function ChineseHat.new(config)
     function self:Destroy()
         self.active = false
         self.enabled = false
-        
         for _, connection in ipairs(self.connections) do
             connection:Disconnect()
         end
         self.connections = {}
-        
         cleanup()
     end
 
@@ -235,10 +191,94 @@ function ChineseHat.new(config)
         self.radius = newRadius
     end
 
-    -- Автоматический запуск
     self:Start()
-    
     return self
 end
+
+local DirtLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Eazvy/UILibs/main/Librarys/Dirt/UiLib.lua"))()
+
+local Window = DirtLib:Window({
+    Name = "Chinese Hat Menu"
+})
+
+local VisualsTab = Window:Tab({
+    Name = "Visuals"
+})
+
+local ChineseHatSection = VisualsTab:Section({
+    Name = "Chinese Hat",
+    Side = "Left"
+})
+
+local hatEnabled = ChineseHatSection:Toggle({
+    Name = "Enable Hat",
+    Default = false,
+    Callback = function(value)
+        if hat then
+            hat:SetEnabled(value)
+        end
+    end
+})
+
+local hatColor = ChineseHatSection:ColorPicker({
+    Name = "Hat Color",
+    Default = Color3.new(1, 0, 0),
+    Callback = function(value)
+        if hat then
+            hat:SetColor(value)
+        end
+    end
+})
+
+local hatTransparency = ChineseHatSection:Slider({
+    Name = "Transparency",
+    Min = 0,
+    Max = 1,
+    Default = 0.3,
+    Callback = function(value)
+        if hat then
+            hat:SetTransparency(value)
+        end
+    end
+})
+
+local hatHeight = ChineseHatSection:Slider({
+    Name = "Height",
+    Min = 0.1,
+    Max = 3,
+    Default = 0.8,
+    Callback = function(value)
+        if hat then
+            hat:SetHeight(value)
+        end
+    end
+})
+
+local hatRadius = ChineseHatSection:Slider({
+    Name = "Radius",
+    Min = 0.1,
+    Max = 5,
+    Default = 1.8,
+    Callback = function(value)
+        if hat then
+            hat:SetRadius(value)
+        end
+    end
+})
+
+local hat = ChineseHat.new({
+    enabled = false,
+    color = Color3.new(1, 0, 0),
+    transparency = 0.3,
+    heightOffset = 0.9,
+    hatHeight = 0.8,
+    radius = 1.8
+})
+
+DirtLib:Notify({
+    Title = "Chinese Hat",
+    Text = "Loaded successfully!",
+    Time = 5
+})
 
 return ChineseHat
